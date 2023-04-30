@@ -34,6 +34,14 @@ MYLDFLAGS= -Wl,-E
 MYLIBS= -ldl -lreadline -lhistory -lncurses
 
 
+# for DLL build
+ifeq ($(MAKECMDGOALS),lua52.dll)
+  MYCFLAGS= -DLUA_COMPAT_ALL -DLUA_BUILD_AS_DLL -D_WINDOWS -D_STDCALL_SUPPORTED -DNDEBUG
+  MYLDFLAGS= -Wl,-s,--dynamicbase,--nxcompat
+  MYLIBS=
+endif
+
+
 
 # == END OF USER SETTINGS. NO NEED TO CHANGE ANYTHING BELOW THIS LINE =========
 
@@ -41,12 +49,12 @@ MYLIBS= -ldl -lreadline -lhistory -lncurses
 LIBS = -lm
 
 CORE_T=	liblua.a
-CORE_O=	lapi.o lcode.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o lmem.o \
-	lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o ltm.o  \
-	lundump.o lvm.o lzio.o ltests.o
-AUX_O=	lauxlib.o
-LIB_O=	lbaselib.o ldblib.o liolib.o lmathlib.o loslib.o ltablib.o lstrlib.o \
-	loadlib.o linit.o
+CORE_O=	lapi.o lcode.o lctype.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o \
+	lmem.o lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o \
+	ltm.o lundump.o lvm.o lzio.o
+CORE_TESTS_O=	ltests.o
+LIB_O=	lauxlib.o lbaselib.o lbitlib.o lcorolib.o ldblib.o liolib.o \
+	lmathlib.o loslib.o lstrlib.o ltablib.o loadlib.o linit.o
 
 LUA_T=	lua
 LUA_O=	lua.o
@@ -55,7 +63,7 @@ LUAC_T=	luac
 LUAC_O=	luac.o print.o
 
 ALL_T= $(CORE_T) $(LUA_T) $(LUAC_T)
-ALL_O= $(CORE_O) $(LUA_O) $(LUAC_O) $(AUX_O) $(LIB_O)
+ALL_O= $(CORE_O) $(CORE_TESTS_O) $(LUA_O) $(LUAC_O) $(LIB_O)
 ALL_A= $(CORE_T)
 
 all:	$(ALL_T)
@@ -64,7 +72,7 @@ o:	$(ALL_O)
 
 a:	$(ALL_A)
 
-$(CORE_T): $(CORE_O) $(AUX_O) $(LIB_O)
+$(CORE_T): $(CORE_O) $(CORE_TESTS_O) $(LIB_O)
 	$(AR) $@ $?
 	$(RANLIB) $@
 
@@ -74,9 +82,15 @@ $(LUA_T): $(LUA_O) $(CORE_T)
 $(LUAC_T): $(LUAC_O) $(CORE_T)
 	$(CC) -o $@ $(MYLDFLAGS) $(LUAC_O) $(CORE_T) $(LIBS) $(MYLIBS)
 
+lua52.dll: $(CORE_O) $(LIB_O) lua_dll.rc.obj
+	$(CC) -o $@ $(MYLDFLAGS) -shared $(LIBS) $(MYLIBS) $?
+
+lua_dll.rc.obj: lua_dll.rc
+	windres -o $@ -c 65001 -J rc -O coff $<
+
 clean:
+	$(RM) $(ALL_T) $(ALL_O) lua52.dll lua_dll.rc.obj
 	rcsclean -u
-	$(RM) $(ALL_T) $(ALL_O)
 
 depend:
 	@$(CC) $(CFLAGS) -MM *.c

@@ -41,6 +41,12 @@ ifeq ($(MAKECMDGOALS),lua52.dll)
   MYLIBS=
 endif
 
+ifeq ($(MAKECMDGOALS),liblua5.2.so)
+  MYCFLAGS= -fPIC -DLUA_COMPAT_ALL -DLUA_USE_LINUX -DNDEBUG
+  MYLDFLAGS= -Wl,-s
+  MYLIBS=
+endif
+
 
 
 # == END OF USER SETTINGS. NO NEED TO CHANGE ANYTHING BELOW THIS LINE =========
@@ -88,8 +94,11 @@ lua52.dll: $(CORE_O) $(LIB_O) lua_dll.rc.obj
 lua_dll.rc.obj: lua_dll.rc
 	windres -o $@ -c 65001 -J rc -O coff $<
 
+liblua5.2.so: $(CORE_O) $(LIB_O)
+	$(CC) -o $@ $(MYLDFLAGS) -shared $(LIBS) $(MYLIBS) $?
+
 clean:
-	$(RM) $(ALL_T) $(ALL_O) lua52.dll lua_dll.rc.obj
+	$(RM) $(ALL_T) $(ALL_O) lua52.dll lua_dll.rc.obj liblua5.2.so
 	rcsclean -u
 
 depend:

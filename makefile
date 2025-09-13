@@ -37,7 +37,7 @@ MYLIBS= -ldl -lreadline -lhistory -lncurses
 # for DLL build
 ifeq ($(MAKECMDGOALS),lua52.dll)
   MYCFLAGS= -DLUA_COMPAT_ALL -DLUA_BUILD_AS_DLL -D_WINDOWS -D_STDCALL_SUPPORTED -DNDEBUG
-  MYLDFLAGS= -Wl,-s,--dynamicbase,--nxcompat
+  MYLDFLAGS= -Wl,-s,--dynamicbase,--nxcompat -static-libgcc
   MYLIBS=
 endif
 
